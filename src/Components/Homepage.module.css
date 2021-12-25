@@ -1,0 +1,25 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    
+}
+
+.btn {
+    padding: 20px;
+    font-size: 20px;
+    border-radius: 6px;
+    width: 250px;
+    background-color: #3498db;
+    border: 1px solid black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #2980b9;
+}
+
+.btn:active {
+    background-color: #3498db;
+}
