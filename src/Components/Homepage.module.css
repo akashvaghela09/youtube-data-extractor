@@ -1,11 +1,12 @@
 .wrapper {
     width: 100%;
-    height: 100vh;
-    border: 1px solid red;
-    background-color: cadetblue;
+    height: calc(100vh - 200px);
+    background-color: #bdc3c7;
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow: auto;
+    padding-bottom: 200px;
 }
 
 .btnWrapper {
@@ -80,21 +81,33 @@
     align-items: center;
 }
 
-.listDiv {
+.listDiv, .listItemDiv {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 10px 0px;
+    border: 1px solid rgb(48, 48, 48);
+    margin: 5px;
+    background-color: #b1b1b1;
 }
 
-.listItem {
+.listItemDiv {
+    width: 90%;
+    margin: 0px;
+}
+
+.listItem, .playlistItem {
     width: 90%;
     margin: 10px;
     display: flex;
     border: 1px solid darkgray;
-    background-color: white;
+    background-color: rgb(231, 231, 231);
     cursor: pointer;
+}
+
+.playlistItem {
+    width: 80%;
+    margin: 5px;
 }
 
 .coverDiv {
@@ -117,6 +130,10 @@
     font-size: 18px;
     font-weight: bold;
     padding: 3px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .subHeader {
@@ -124,7 +141,17 @@
     padding: 3px;
 }
 
-.loadButton {
+.btnDiv {
     width: 20%;
+    display: grid;
+    place-content: center;
+}
+
+.addButton {
+    width: 100px;
+    padding: 4px;
+}
+.loadButton {
+    width: 100%;
     padding: 4px;
 }

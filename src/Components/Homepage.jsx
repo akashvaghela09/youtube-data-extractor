@@ -12,7 +12,8 @@ const HomePage = () => {
     const [searchMode, setSearchMode] = useState("playlist")
     const myref= useRef();
     const [playListArray, setPlayListArray] = useState([])
-    // const [currentPlaylistItemArray, setCurrentPlaylistItemArray] = useState()
+    const [currentPlaylistItemArray, setCurrentPlaylistItemArray] = useState([])
+    const [currentPlaylistID, setCurrentPlaylistID] = useState("")
     
     const handleLoad = (e) => {
         // console.log("loaded")
@@ -28,6 +29,7 @@ const HomePage = () => {
     }
     
     const handleCheck = () => {
+        console.log(tempPlaylist);
         // console.log("checking")
         // console.log("playlist : ", tempPlaylist[0].items);
         // console.log("radiolist : ", tempRadiolist[0].items);
@@ -144,6 +146,7 @@ const HomePage = () => {
         // console.log("el: ", el)
         // console.log("nextPageToken: ", nextPageToken);
         
+        
         axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
             params: {
                 "key" : process.env.REACT_APP_KEY,
@@ -210,21 +213,43 @@ const HomePage = () => {
                 tempPlayListItemArrayResponse.push(playListItemObj)
             }
             
-            // let newArray = [...searchResult, ...tempPlayListItemArrayResponse]
-            // console.log(tempPlayListItemArrayResponse)
-           
-            
             if(pageResultTotal > 50 && nextToken !== undefined && nextToken !== "" && count < 5){
                 console.log("called again")
               
                 handlePlaylistItemsSearch(el, nextToken, tempPlayListItemArrayResponse)
             } else {
                 console.log("stopped")
-                console.log(tempPlayListItemArrayResponse)
+                // console.log(tempPlayListItemArrayResponse)
+                setCurrentPlaylistItemArray(tempPlayListItemArrayResponse)
                 return
             }
-            // setPlayListArray([...tempPlayListArrayResponse])
         })
+    }
+    
+    const loadPlaylist = (el) => {
+        if(currentPlaylistID === ""){
+            setCurrentPlaylistID(el.id)
+        } else {
+            setCurrentPlaylistID("")
+            return
+        }
+        
+        handlePlaylistItemsSearch(el)
+    }
+    
+    const addPlaylist = () => {
+        let tempObj = {
+            "id": uuid(),
+            "channelName": currentPlaylistItemArray[0].channelName,
+            "playlistName": currentPlaylistItemArray[0].playlistName,
+            "playlistCover": currentPlaylistItemArray[0].playlistCover,
+            "items": currentPlaylistItemArray 
+        }
+        
+        setTempPlaylist([...tempPlaylist, tempObj])
+        setCurrentPlaylistItemArray([])
+        setCurrentPlaylistID("")
+        alert("added")
     }
     
     return (
@@ -272,8 +297,28 @@ const HomePage = () => {
                                     <p className={styles.header}>{el.playlistName}</p>
                                     <p className={styles.subHeader}>{el.channelName}</p>
                                 </div>
-                                <button onClick={() => handlePlaylistItemsSearch(el)} className={styles.loadButton}>Load Playlist Items</button>
+                                <div className={styles.btnDiv}>
+                                    <button onClick={() => loadPlaylist(el)} className={styles.loadButton}>{currentPlaylistID === el.id ? "Close" : "Load"}</button>
+                                </div>
                             </div>
+                            {
+                                currentPlaylistItemArray.length > 0 && currentPlaylistID === el.id &&
+                                <button onClick={() => addPlaylist(el)} className={styles.addButton}>Add All Videos</button>                            
+                            }
+                            {
+                                currentPlaylistItemArray.length > 0 && currentPlaylistID === el.id &&
+                                currentPlaylistItemArray.map((item) => {
+                                    return <div key={item.id} className={styles.playlistItem}>
+                                                    <div className={styles.coverDiv}>
+                                                        <img src={item.videoCover} alt="playitem cover" className={styles.playCover}/>
+                                                    </div>
+                                                    <div className={styles.dataDiv}>
+                                                        <p className={styles.header}>{item.videoName}</p>
+                                                        <p className={styles.subHeader}>{item.playlistName}</p>
+                                                    </div>
+                                            </div>
+                                })                                
+                            }
                         </div>
                     })
                     
