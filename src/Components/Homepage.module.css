@@ -102,7 +102,6 @@
     display: flex;
     border: 1px solid darkgray;
     background-color: rgb(231, 231, 231);
-    cursor: pointer;
 }
 
 .playlistItem {
@@ -150,8 +149,43 @@
 .addButton {
     width: 100px;
     padding: 4px;
+    cursor: pointer;
 }
 .loadButton {
     width: 100%;
     padding: 4px;
+    cursor: pointer;
+}
+
+.radioResult {
+    border: 1px solid rgb(105, 105, 105);
+    width: 90%;
+    display: flex;
+    background-color: #e2e2e2;
+    margin: 20px 0px;
+}
+
+.radioCoverDiv {
+    width: 20%;
+}
+
+.radioCover {
+  width: 80%;
+  object-fit: cover;  
+}
+
+.radioDataDiv {
+    width: 60%;
+}
+
+.radioName {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.radioAddBtn {
+    width: 20%;
+    cursor: pointer;
 }

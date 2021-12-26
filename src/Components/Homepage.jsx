@@ -6,14 +6,23 @@ import moment from "moment";
 
 const HomePage = () => {
     const [tempPlaylist, setTempPlaylist] = useState([])
-    const [tempRadiolist, setRadiolist] = useState([])
+    const [tempRadiolist, setTempRadiolist] = useState([])
     const [downloadFile, setDownloadfile] = useState(null)
-    const [searchValue, setSearchValue] = useState("UCSJ4gkVC6NrvII8umztf0Ow")
-    const [searchMode, setSearchMode] = useState("playlist")
+    const [searchValue, setSearchValue] = useState("sXFQExxceC4")
+    const [searchMode, setSearchMode] = useState("radio")
     const myref= useRef();
     const [playListArray, setPlayListArray] = useState([])
     const [currentPlaylistItemArray, setCurrentPlaylistItemArray] = useState([])
     const [currentPlaylistID, setCurrentPlaylistID] = useState("")
+    const [currentRadioItem, setCurrentRadioItem] = useState([])
+    
+    const handleModeChange = (para) => {
+        setSearchMode(para)
+        setPlayListArray([])
+        setCurrentPlaylistID("")
+        setCurrentPlaylistItemArray([])
+        setSearchValue("")
+    }
     
     const handleLoad = (e) => {
         // console.log("loaded")
@@ -23,13 +32,14 @@ const HomePage = () => {
             var content = e.target.result;
             var parsedJSON = JSON.parse(content); // parse json 
             setTempPlaylist([...parsedJSON.playlistData])
-            setRadiolist([...parsedJSON.radioData])
+            setTempRadiolist([...parsedJSON.radioData])
           };
         fileread.readAsText(rawFile);
     }
     
     const handleCheck = () => {
         console.log(tempPlaylist);
+        console.log(tempRadiolist);
         // console.log("checking")
         // console.log("playlist : ", tempPlaylist[0].items);
         // console.log("radiolist : ", tempRadiolist[0].items);
@@ -77,8 +87,16 @@ const HomePage = () => {
     
     const handleDownload = (e) => {
         console.log("downloaded initiated")
+
+        let downloadObj = {
+            "playlistData": tempPlaylist,
+            "radioData": tempRadiolist
+        }        
+        
+        console.log(downloadObj)
+        
         // Prepare the file
-        let output = JSON.stringify([], null, 4); 
+        let output = JSON.stringify(downloadObj, null, 4); 
         
         // Download it
         const blob = new Blob([output]);
@@ -93,6 +111,14 @@ const HomePage = () => {
     }
     
     const handleSearch = () => {
+        if(searchMode === "playlist"){
+            searchForPlaylist()       
+        } else {
+            searchForRadio()
+        }
+        
+    }
+    const searchForPlaylist = () => {
         // console.log(searchValue)
         
         axios.get("https://www.googleapis.com/youtube/v3/playlists", {
@@ -139,8 +165,6 @@ const HomePage = () => {
             setPlayListArray([...tempPlayListArrayResponse])
         })
     }
-    
-    let count = 0;
     
     const handlePlaylistItemsSearch = (el, nextPageToken = "", oldResponse = []) => {
         // console.log("el: ", el)
@@ -213,7 +237,7 @@ const HomePage = () => {
                 tempPlayListItemArrayResponse.push(playListItemObj)
             }
             
-            if(pageResultTotal > 50 && nextToken !== undefined && nextToken !== "" && count < 5){
+            if(pageResultTotal > 50 && nextToken !== undefined && nextToken !== ""){
                 console.log("called again")
               
                 handlePlaylistItemsSearch(el, nextToken, tempPlayListItemArrayResponse)
@@ -252,6 +276,59 @@ const HomePage = () => {
         alert("added")
     }
     
+    const searchForRadio = () => {
+        console.log("radio is searched")
+        
+        axios.get("https://www.googleapis.com/youtube/v3/videos", {
+            params: {
+                "key": process.env.REACT_APP_KEY,
+                "part": "contentDetails, snippet",
+                "id": searchValue
+            }
+        })
+        .then((res) => {
+            let vidResponse = res.data.items[0]
+            let cover = ""
+            let durationString = vidResponse.contentDetails.duration
+            let duration = moment.duration(durationString).asSeconds();
+             
+            // get video cover
+            if(vidResponse.snippet.thumbnails.maxres !== undefined){
+                cover = vidResponse.snippet.thumbnails.maxres.url
+            } else if (vidResponse.snippet.thumbnails.standard !== undefined){
+                cover = vidResponse.snippet.thumbnails.standard.url
+            } else if (vidResponse.snippet.thumbnails.high !== undefined){
+                cover = vidResponse.snippet.thumbnails.high.url
+            } else if (vidResponse.snippet.thumbnails.medium !== undefined){
+                cover = vidResponse.snippet.thumbnails.medium.url
+            } else if (vidResponse.snippet.thumbnails.default !== undefined){
+                cover = vidResponse.snippet.thumbnails.default.url
+            }
+            
+            // create object
+            let radioItemObj = {
+                "id": uuid(),
+                "channelId": vidResponse.snippet.channelId,
+                "channelName": vidResponse.snippet.channelTitle,
+                "videoId": searchValue,
+                "videoName": vidResponse.snippet.title,
+                "videoCover": cover,
+                "videoUrl": `https://www.youtube.com/watch?v=${searchValue}`,
+                "duration": duration
+            }
+            // console.log(radioItemObj)
+            
+            setCurrentRadioItem([radioItemObj])
+        })
+    }
+    
+    const addRadio = () => {
+        console.log(currentRadioItem)
+        setTempRadiolist([...tempRadiolist, ...currentRadioItem])
+        setCurrentRadioItem([])
+        setSearchValue("")
+    }
+    
     return (
         <div className={styles.wrapper}>
             <div className={styles.btnWrapper}>
@@ -269,8 +346,8 @@ const HomePage = () => {
             </div>
             <div className={styles.modeDiv}>
                 <p>Select what you want to search</p>
-                <button onClick={() => setSearchMode("playlist")} className={searchMode === "playlist" ? styles.btnSelected : null}>Playlist</button>
-                <button onClick={() => setSearchMode("video")} className={searchMode === "video" ? styles.btnSelected : null}>Video</button>
+                <button onClick={() => handleModeChange("playlist")} className={searchMode === "playlist" ? styles.btnSelected : null}>Playlist</button>
+                <button onClick={() => handleModeChange("radio")} className={searchMode === "radio" ? styles.btnSelected : null}>Radio</button>
             </div>
             <div className={styles.inputDiv}>
                 <input className={styles.searchInput} value={searchValue} onChange={(e) => handleInputChange(e)}/>
@@ -278,16 +355,7 @@ const HomePage = () => {
             </div>
             <div className={styles.resultDiv}>
                 {
-                    searchMode === "playlist" && playListArray.length !== 0 &&
-                    <div className={styles.resultActionBtnDiv}>
-                        <button>Add All</button>
-                        <button>Add Selected</button>
-                        <button>Clear Selected</button>
-                        <button>Delete Selected</button>
-                    </div>
-                }
-                {
-                    playListArray.length > 0 && playListArray.map((el) => {
+                    searchMode === "playlist" && playListArray.length > 0 && playListArray.map((el) => {
                         return <div key={el.id} className={styles.listDiv}>
                             <div className={styles.listItem}>
                                 <div className={styles.coverDiv}>
@@ -322,6 +390,19 @@ const HomePage = () => {
                         </div>
                     })
                     
+                }
+                {
+                    searchMode === "radio" && currentRadioItem.length > 0 && 
+                    <div className={styles.radioResult}>
+                        <div className={styles.radioCoverDiv}>
+                            <img className={styles.radioCover} src={currentRadioItem[0].videoCover} alt="radio cover" />
+                        </div>
+                        <div className={styles.radioDataDiv}>
+                            <p className={styles.radioName}>{currentRadioItem[0].videoName}</p>
+                            <p className={styles.radioChannelName}>{currentRadioItem[0].channelName}</p>
+                        </div>
+                        <button className={styles.radioAddBtn} onClick={() => addRadio()}>Add to List</button>
+                    </div>
                 }
             </div>
         </div>
