@@ -8,13 +8,14 @@ const HomePage = () => {
     const [tempPlaylist, setTempPlaylist] = useState([])
     const [tempRadiolist, setTempRadiolist] = useState([])
     const [downloadFile, setDownloadfile] = useState(null)
-    const [searchValue, setSearchValue] = useState("sXFQExxceC4")
-    const [searchMode, setSearchMode] = useState("radio")
+    const [searchValue, setSearchValue] = useState("")
+    const [searchMode, setSearchMode] = useState("")
     const myref= useRef();
     const [playListArray, setPlayListArray] = useState([])
     const [currentPlaylistItemArray, setCurrentPlaylistItemArray] = useState([])
     const [currentPlaylistID, setCurrentPlaylistID] = useState("")
     const [currentRadioItem, setCurrentRadioItem] = useState([])
+    const [parsedFile, setParsedFile] = useState({})
     
     const handleModeChange = (para) => {
         setSearchMode(para)
@@ -25,65 +26,37 @@ const HomePage = () => {
     }
     
     const handleLoad = (e) => {
-        // console.log("loaded")
+        console.log("loaded")
         let rawFile = e.target.files[0]
         var fileread = new FileReader();
         fileread.onload = function(e) {
             var content = e.target.result;
             var parsedJSON = JSON.parse(content); // parse json 
-            setTempPlaylist([...parsedJSON.playlistData])
-            setTempRadiolist([...parsedJSON.radioData])
-          };
+            console.log(parsedJSON)
+            setParsedFile(parsedJSON)
+        };
         fileread.readAsText(rawFile);
     }
     
     const handleCheck = () => {
-        console.log(tempPlaylist);
-        console.log(tempRadiolist);
+        // console.log(tempPlaylist);
+        // console.log(tempRadiolist);
         // console.log("checking")
-        // console.log("playlist : ", tempPlaylist[0].items);
-        // console.log("radiolist : ", tempRadiolist[0].items);
         
-        // let playListArray = []
-        // let channelNameArray = []
-        
-        // for(let i = 0; i < tempPlaylist.length; i++){
-        //     let playListItemArray = tempPlaylist[i].items
-        //     // console.log("inside playlist data")
-            
-        //     for(let j = 0; j < playListItemArray.length; j++){
-        //         // console.log("inside playlist item list")
-        //         let playItem = playListItemArray[j];
-        //         let channelName = playListItemArray[j].snippet.channelTitle;
-        //         let channelFlag = false;
-        //         // let playObj = {
-        //         //     "id": uuid(),
-        //         //     "channelId": playItem.channelId,
-        //         //     "playlistId": playItem.playlistId,
-        //         //     "videoId": playItem.resourceId.videoId,
-        //         //     "channelName": channelName
-        //         // }
-        //         // console.log(channelName)
-        //         for(let k = 0; k < channelNameArray.length; k++){
-        //             // console.log("inside array list")
-        //             if(channelNameArray[k] === channelName){
-        //                 channelFlag = true;
-        //             }
-        //         }
-        //         if(channelFlag === false) {
-        //             // console.log("for break")
-        //             channelNameArray.push(channelName)
-        //             break;
-        //         }
-                
-        //         console.log(playItem)
-        //     }
-            
-            
-            
-        // }
-        
+        // generateForPlaylist(parsedFile.playlist)
+        // generateForRadio(parsedFile.radio)
+        alert("In progress")
     }
+    
+    // const generateForPlaylist = (arr) => {
+    //     for(let i = 0; i < arr.length; i++){
+    //         searchForPlaylist(arr[i])
+    //     }
+    // }
+    
+    // const generateForRadio = (arr) => {
+        
+    // }
     
     const handleDownload = (e) => {
         console.log("downloaded initiated")
@@ -106,25 +79,24 @@ const HomePage = () => {
     }
     
     const handleInputChange = (e) => {
-        // console.log(e.target.value)
         setSearchValue(e.target.value)
     }
     
     const handleSearch = () => {
         if(searchMode === "playlist"){
-            searchForPlaylist()       
+            searchForPlaylist(searchValue)       
         } else {
-            searchForRadio()
+            searchForRadio(searchValue)
         }
         
     }
-    const searchForPlaylist = () => {
-        // console.log(searchValue)
-        
+    const searchForPlaylist = (para) => {
+        console.log("searching for playlist")
+        console.log(para)
         axios.get("https://www.googleapis.com/youtube/v3/playlists", {
             params: {
                 "key" : process.env.REACT_APP_KEY,
-                "channelId" : searchValue,
+                "channelId" : para,
                 "part": "snippet"
             }
         })
@@ -152,7 +124,7 @@ const HomePage = () => {
                 let playListObj = {
                     "id": uuid(),
                     "playlistId": getRes[i].id,
-                    "channelId": searchValue,
+                    "channelId": para,
                     "playlistName": getRes[i].snippet.title,
                     "channelName": getRes[i].snippet.channelTitle,
                     "playlistCover": cover
@@ -167,10 +139,6 @@ const HomePage = () => {
     }
     
     const handlePlaylistItemsSearch = (el, nextPageToken = "", oldResponse = []) => {
-        // console.log("el: ", el)
-        // console.log("nextPageToken: ", nextPageToken);
-        
-        
         axios.get("https://www.googleapis.com/youtube/v3/playlistItems", {
             params: {
                 "key" : process.env.REACT_APP_KEY,
@@ -184,8 +152,6 @@ const HomePage = () => {
             let getRes = res.data;
             let pageResultTotal = getRes.pageInfo.totalResults;
             let nextToken = res.data.nextPageToken;
-            // console.log("nextToken: ", nextToken);
-            // console.log("res: ", res.data);
             let tempPlayListItemArrayResponse = [...oldResponse]
             
             for(let i = 0; i < getRes.items.length; i++){
@@ -243,7 +209,6 @@ const HomePage = () => {
                 handlePlaylistItemsSearch(el, nextToken, tempPlayListItemArrayResponse)
             } else {
                 console.log("stopped")
-                // console.log(tempPlayListItemArrayResponse)
                 setCurrentPlaylistItemArray(tempPlayListItemArrayResponse)
                 return
             }
@@ -316,8 +281,7 @@ const HomePage = () => {
                 "videoUrl": `https://www.youtube.com/watch?v=${searchValue}`,
                 "duration": duration
             }
-            // console.log(radioItemObj)
-            
+  
             setCurrentRadioItem([radioItemObj])
         })
     }
@@ -332,11 +296,11 @@ const HomePage = () => {
     return (
         <div className={styles.wrapper}>
             <div className={styles.btnWrapper}>
-                <button className={styles.btn} >Load File
+                <button className={styles.btn} >Load
                     <input onChange={(e) => handleLoad(e)} type="file" className={styles.loadInput} />
                 </button>
-                <button className={styles.btn} onClick={() => handleCheck()}>Check Status</button>
-                <button className={styles.btn} onClick={(e) => handleDownload(e)}>Download Template</button>
+                <button className={styles.btn} onClick={() => handleCheck()}>Generate</button>
+                <button className={styles.downloadBtn} onClick={(e) => handleDownload(e)}>Download</button>
                 <a 
                         className={styles.downloadLink}
                         download="template.json"
@@ -345,13 +309,13 @@ const HomePage = () => {
                     >download link</a>
             </div>
             <div className={styles.modeDiv}>
-                <p>Select what you want to search</p>
-                <button onClick={() => handleModeChange("playlist")} className={searchMode === "playlist" ? styles.btnSelected : null}>Playlist</button>
-                <button onClick={() => handleModeChange("radio")} className={searchMode === "radio" ? styles.btnSelected : null}>Radio</button>
+                <p>Select what you want to Add</p>
+                <button onClick={() => handleModeChange("playlist")} className={searchMode === "playlist" ? styles.btnSelected : styles.commonBtn}>Playlist</button>
+                <button onClick={() => handleModeChange("radio")} className={searchMode === "radio" ? styles.btnSelected : styles.commonBtn}>Radio</button>
             </div>
             <div className={styles.inputDiv}>
                 <input className={styles.searchInput} value={searchValue} onChange={(e) => handleInputChange(e)}/>
-                <button onClick={() => handleSearch()}>Search</button>
+                <button className={styles.searchBtn} onClick={() => handleSearch()}>Search</button>
             </div>
             <div className={styles.resultDiv}>
                 {
